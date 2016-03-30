@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:secure-property-placeholder="http://www.mulesoft.org/schema/mule/secure-property-placeholder" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:smtps="http://www.mulesoft.org/schema/mule/smtps" xmlns:data-mapper="http://www.mulesoft.org/schema/mule/ee/data-mapper" xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:imaps="http://www.mulesoft.org/schema/mule/imaps" xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:smtp="http://www.mulesoft.org/schema/mule/smtp" xmlns:imap="http://www.mulesoft.org/schema/mule/imap" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.5.1"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd
+http://www.mulesoft.org/schema/mule/imap http://www.mulesoft.org/schema/mule/imap/current/mule-imap.xsd
+http://www.mulesoft.org/schema/mule/smtp http://www.mulesoft.org/schema/mule/smtp/current/mule-smtp.xsd
+http://www.mulesoft.org/schema/mule/imaps http://www.mulesoft.org/schema/mule/imaps/current/mule-imaps.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
+http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
+http://www.mulesoft.org/schema/mule/ee/data-mapper http://www.mulesoft.org/schema/mule/ee/data-mapper/current/mule-data-mapper.xsd
+http://www.mulesoft.org/schema/mule/smtps http://www.mulesoft.org/schema/mule/smtps/current/mule-smtps.xsd
+http://www.mulesoft.org/schema/mule/secure-property-placeholder http://www.mulesoft.org/schema/mule/secure-property-placeholder/current/mule-secure-property-placeholder.xsd">
+    <imaps:connector name="imapsConnector" doc:name="IMAP" validateConnections="false">
+        <imaps:tls-client path="*" storePassword="*" /> 
+        <imaps:tls-trust-store path="*" storePassword="*" />
+    </imaps:connector> 
+	<smtps:endpoint host="smtp.gmail.com" port="465" name="SMTP" responseTimeout="10000" mimeType="text/plain" doc:name="SMTP" password="uwif2738872gfy03gfy9uh823gr78y1928r9" user="soylygreen"/>
+    
+    <imaps:endpoint host="imap.gmail.com" port="993" user="soygreen" password="uwif2738872gfuioy03gfy823gr78y1928r9" connector-ref="imapsConnector" name="IMAP_INBOUND" responseTimeout="10000" doc:name="IMAP"/>
+    <data-mapper:config name="Pojo_To_Pojo" transformationGraphPath="pojo_to_pojo.grf" doc:name="Pojo_To_Pojo"/>
+    
+    <data-mapper:config name="Email_To_List_CaseComment_" transformationGraphPath="email_to_list_casecomment_.grf" doc:name="Email_To_List_CaseComment_"/>
+    <data-mapper:config name="SaveResult_To_Map" transformationGraphPath="saveresult_to_map.grf" doc:name="SaveResult_To_Map"/>
+    <secure-property-placeholder:config name="Secure_Property_Placeholder" key="D4p5vS3FvcCVovAh" location="${app.home}/secured.properties" doc:name="Secure Property Placeholder"/>
+    <flow name="mule-lint-exampleFlow1" doc:name="mule-lint-exampleFlow1">
+        <http:inbound-endpoint exchange-pattern="request-response" host="localhost" port="8081" doc:name="HTTP"/>
+        <set-variable variableName="securedProperty" value="${secured.property.test}" doc:name="Variable"/>
+    </flow>
+        
+        <flow name="poll_for_email" doc:name="poll_for_email">
+            <imaps:inbound-endpoint    responseTimeout="10000" doc:name="IMAP" ref="IMAP_INBOUND"/>
+        <data-mapper:transform config-ref="Pojo_To_Pojo" doc:name="Pojo To Pojo">
+            <data-mapper:input-arguments>
+                <data-mapper:input-argument key="subject">#[message.inboundProperties['subject']]</data-mapper:input-argument>
+                <data-mapper:input-argument key="inReplyTo">#[message.inboundProperties['In-Reply-To']]</data-mapper:input-argument>
+                <data-mapper:input-argument key="caseId">#[message.inboundProperties['subject']]</data-mapper:input-argument>
+                <data-mapper:input-argument key="body">#[payload]</data-mapper:input-argument>
+                <data-mapper:input-argument key="from">#[message.inboundProperties['from']]</data-mapper:input-argument>
+            </data-mapper:input-arguments>
+        </data-mapper:transform>
+        
+        
+            <choice doc:name="Choice">
+                <when expression="#[payload.getCaseId() != null]">
+                <vm:outbound-endpoint exchange-pattern="one-way" path="support/case/update" doc:name="VM"/>
+                
+                </when>
+                <otherwise>
+                <vm:outbound-endpoint exchange-pattern="one-way" path="support/case/new" doc:name="VM"/>
+                
+                </otherwise>
+            </choice>
+            </flow>
+    <flow name="createNew" doc:name="createNew">
+        <vm:inbound-endpoint exchange-pattern="one-way" path="support/case/new" doc:name="VM"/>
+        <set-variable variableName="fromAddress" value="#[payload.getFrom()]" doc:name="fromAddress"/>
+        <data-mapper:transform config-ref="Pojo_To_Case" doc:name="Email To Case"/>
+        <sfdc:create-single config-ref="Salesforce" type="Case" doc:name="Salesforce"/>
+        <data-mapper:transform config-ref="SaveResult_To_Map" doc:name="SaveResult To Map"/>
+        <choice doc:name="success?">
+	     	<when expression="#[map-payload:success]">
+		       	<enricher doc:name="Message Enricher">
+		           	<sfdc:query-single config-ref="Salesforce" query="SELECT CaseNumber FROM Case where Case.Id = '#[map-payload:id]'" doc:name="Salesforce"/>
+		           	<enrich source="#[map-payload:CaseNumber]" target="#[flowVars['caseNumber']]"/>
+		       	</enricher>
+		        <message-properties-transformer name="setSuccessEmailProps" doc:name="Message Properties">
+			   		<add-message-property key="from" value="soygreen#cases@gmail.com"/>
+			  			<add-message-property key="to" value="#[flowVars.fromAddress]"/>
+			  		 	<add-message-property key="body" value="A new issue has been created"/>
+			   		<add-message-property key="subject" value="'Case ' #[flowVars.caseNumber] ' created'"/>
+				</message-properties-transformer>
+		        <smtps:outbound-endpoint  responseTimeout="10000" doc:name="SMTP" ref="SMTP" />
+	       	</when>
+	        <otherwise>
+                <logger level="INFO" doc:name="Black Hole"/>
+	        </otherwise>
+       	</choice>
+    </flow>
+    <flow name="updateExisting" doc:name="updateExisting">
+        <vm:inbound-endpoint exchange-pattern="one-way" path="support/case/update" doc:name="VM"/>
+        <enricher  doc:name="Message Enricher">
+            <sfdc:query-single config-ref="Salesforce" query="SELECT Id FROM Case where Case.CaseNumber = '#[payload.getCaseId()]'" doc:name="Salesforce"/>
+            <enrich source="#[map-payload:Id]" target="#[flowVars['apiId']]"/>
+        </enricher>
+        <data-mapper:transform config-ref="Email_To_List_CaseComment_" doc:name="Email To Comments">
+            <data-mapper:input-arguments>
+                <data-mapper:input-argument key="parentId">#[flowVars['apiId']]</data-mapper:input-argument>
+            </data-mapper:input-arguments>
+        </data-mapper:transform>
+        <sfdc:create config-ref="Salesforce" type="CaseComment" doc:name="Salesforce">
+            <sfdc:objects ref="#[payload]"/>
+        </sfdc:create>
+    </flow>
+</mule>
