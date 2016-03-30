@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule-lint xmlns:doc="http://www.mulesoft.org/schema/mule/documentation">
+	<global-patterns>
+		<pattern name="external-property" doc:name="property has been externalized pattern validation match" type="regex">.*\$\{.+\}.*</pattern>
+		<pattern name="lowercase-camel-case-property" doc:name="property is camelCase pattern validation match" type="regex">^[a-z]+([A-Za-z0-9]+)*$</pattern>
+		<pattern name="uppercase-camel-case-property" doc:name="property is CamelCase pattern validation match" type="regex">^[A-Z]+([A-Za-z0-9]+)*$</pattern>
+		<pattern name="lowercase-hyphenated-words" doc:name="property consists of lowercase words separated by dashes" type="regex">^[a-z]+(-[a-z0-9]+)+$</pattern>
+		<pattern name="existing-java-class" doc:name="check whether a java class is in the classpath" type="java">com.mule.lint.custom.JavaClassExists</pattern>
+		<pattern name="existing-flow-name" doc:name="check whether a flow with a given name exists" type="java">com.mule.lint.custom.FlowExists</pattern>
+	
+	</global-patterns>
+	<rules>
+		<rule category="Security">
+			<checks name="Passwords">
+				<check match="//@password" pattern="external-property"/>
+				<check match="//@storePassword" pattern="external-property" />
+			</checks>	
+			<checks name="Check secured-properties">
+				<check match="//secure-property-placeholder:config/@key" pattern="external-property" />
+				<check match="//secure-property-placeholder:config/@location" pattern="external-property" />
+			</checks>
+		</rule>
+		
+		<rule category="Flow and sub-flow names">
+			<checks name="Check for lowercase, hyphenated names">
+				<check match="//:flow/@name" pattern="lowercase-hyphenated-words"/>
+				<check match="//:sub-flow/@name" pattern="lowercase-hyphenated-words"/>		
+			</checks>	
+		</rule>
+		
+		<rule category="Variable names">
+			<checks name="Check for camel-case">
+				<check match="//:set-variable/@variableName" pattern="lowercase-camel-case-property"/>		
+			</checks>	
+		</rule>
+		<rule category="HTTP Inbound-endpoint">
+			<checks name="Check for hard-coded values">
+				<check match="//http:inbound-endpoint/@host" pattern="external-property"/>	
+				<check match="//http:inbound-endpoint/@port" pattern="external-property"/>
+			</checks>	
+		</rule>
+		<rule category="SMTPS Endpoint">
+			<checks name="Check for hard-coded values">
+				<check match="//smtps:endpoint/@host" pattern="external-property"/>	
+				<check match="//smtps:endpoint/@port" pattern="external-property"/>
+				<check match="//smtps:endpoint/@user" pattern="external-property"/>
+			</checks>	
+		</rule>
+		<rule category="Component">
+			<checks name="Check for non-existing java class">
+				<check match="//:component/@class" pattern="existing-java-class"/>
+			</checks>	
+		</rule>
+		<rule category="Bean">
+			<checks name="Check for non-existing java class">
+				<check match="//:bean/@class" pattern="java-class-in-classpath"/>
+			</checks>	
+		</rule>
+		
+	</rules>
+</mule-lint>
