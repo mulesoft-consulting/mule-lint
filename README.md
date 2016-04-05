@@ -2,7 +2,7 @@
 Static analyzer for Mule configuration files
 
 ## Goal
-The goal of Mule Lint is to help enforce proper and consitent Mule configurations based on MuleSoft's best practices. Mule Lint should be incorporated into the Mule Application build process.
+The goal of Mule Lint is to help enforce proper and consistent Mule configurations based on MuleSoft's best practices. Mule Lint should be incorporated into the Mule Application build process.
 
 For example:
 * Configurable parameters should be placed into property file(s)
